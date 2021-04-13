@@ -11,9 +11,11 @@ class BannerListView(ListAPIView):
     serializer_class = BannerModelSerializer
 
 class HeaderListView(ListAPIView):
+    """顶部导航接口"""
     queryset = Nav.objects.filter(is_show=True, is_delete=False, position=1).order_by("orders")
     serializer_class = NavModelSerializer
 
 class FooterListView(ListAPIView):
+    """底部导航接口"""
     queryset = Nav.objects.filter(is_show=True, is_delete=False, position=2).order_by("orders")
     serializer_class = NavModelSerializer

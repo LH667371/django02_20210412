@@ -27,5 +27,6 @@ urlpatterns = [
     # path('admin/', admin.site.urls),
     path('admin/', xadmin.site.urls),
     path('home/', include('djangoProject.apps.home.urls')),
+    path('user/', include('djangoProject.apps.user.urls')),
     url(r"media/(?P<path>.*)", serve, {"document_root": settings.MEDIA_ROOT}),
 ]
