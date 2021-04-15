@@ -70,14 +70,14 @@ class SendMessageAPIView(APIView):
         """
         phone = request.query_params.get('phone')
         status = request.query_params.get('status')
-        if status == 'login' or 'forgot':
+        if status == 'login' or status == 'forgot':
             user = UserInfo.objects.filter(phone=phone)
             if not user:
                 return Response({'message': '您未注册！是否跳转去注册？'}, status=http_status.HTTP_400_BAD_REQUEST)
         elif status == 'register':
             user = UserInfo.objects.filter(phone=phone)
             if user:
-                return Response({'message': '您已经注册！是否跳转去登录？'})
+                return Response({'message1': '您已经注册！是否跳转去登录？'})
         # 获取redis链接
         redis_connection = get_redis_connection('sms_code')
         # 1. 判断该手机号格式以及是否在60s内发送过验证码
@@ -92,9 +92,9 @@ class SendMessageAPIView(APIView):
         redis_connection.delete("count%s" % phone)
         print(code)
         # 4. 调用发送短信方法，完成发送
-        message = Message(constants.API_KEY)
-        status = message.send_message(phone, code)
-        print(status)
+        # message = Message(constants.API_KEY)
+        # status = message.send_message(phone, code)
+        # print(status)
         # 5. 响应发送的结果
         return Response({'message': '发送短信成功'})
 
