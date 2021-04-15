@@ -11,6 +11,7 @@ from rest_framework_jwt.authentication import JSONWebTokenAuthentication
 
 from djangoProject.libs.geetest import GeetestLib
 from djangoProject.utils.generate_code import generate_code
+from djangoProject.utils.message import Message
 from user.models import UserInfo
 from user.serializer import RegisterSerializers, ChangePasswordSerializers
 from user.utils import get_user_by_account
@@ -91,8 +92,9 @@ class SendMessageAPIView(APIView):
         redis_connection.delete("count%s" % phone)
         print(code)
         # 4. 调用发送短信方法，完成发送
-        # message = Message(constants.API_KEY)
-        # status = message.send_message(phone, code)
+        message = Message(constants.API_KEY)
+        status = message.send_message(phone, code)
+        print(status)
         # 5. 响应发送的结果
         return Response({'message': '发送短信成功'})
 
@@ -103,7 +105,7 @@ class MessageCheckAPIView(APIView):
     def post(self, request):
         phone = request.data.get('phone')
         code = request.data.get('code')
-        status = request.query_params.get('status')
+        status = request.data.get('status')
         # 验证用户提交的验证码是否正确
         from django_redis import get_redis_connection
         connection = get_redis_connection("sms_code")
