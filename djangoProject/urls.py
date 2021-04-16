@@ -28,5 +28,6 @@ urlpatterns = [
     path('admin/', xadmin.site.urls),
     path('home/', include('djangoProject.apps.home.urls')),
     path('user/', include('djangoProject.apps.user.urls')),
+    path('course/', include('djangoProject.apps.course.urls')),
     url(r"media/(?P<path>.*)", serve, {"document_root": settings.MEDIA_ROOT}),
 ]

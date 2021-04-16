@@ -26,6 +26,7 @@ xadmin.site.register(views.CommAdminView, GlobalSettings)
 # 将轮播图模型注册到后台
 class BannerModelAdmin(object):
     list_display = ['id', "title", "orders", "is_show"]
+    ordering = ['id']
 
 
 xadmin.site.register(Banner, BannerModelAdmin)
@@ -33,6 +34,7 @@ xadmin.site.register(Banner, BannerModelAdmin)
 
 class NavModelAdmin(object):
     list_display = ['id', "title", "link", "position", "is_show"]
+    ordering = ['id']
 
 
 xadmin.site.register(Nav, NavModelAdmin)
