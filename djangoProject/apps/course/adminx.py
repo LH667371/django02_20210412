@@ -1,6 +1,6 @@
 import xadmin
 
-from course.models import CourseCategory, Course, Teacher, CourseChapter, CourseLesson
+from course.models import CourseCategory, Course, Teacher, CourseChapter, CourseLesson, Comment
 
 
 class CourseCategoryModelAdmin(object):
@@ -48,3 +48,11 @@ class CourseLessonModelAdmin(object):
 
 
 xadmin.site.register(CourseLesson, CourseLessonModelAdmin)
+
+
+class CommentModelAdmin(object):
+    list_display = ['id', 'user', 'course', 'date', 'is_delete']
+    ordering = ['id']
+
+
+xadmin.site.register(Comment, CommentModelAdmin)

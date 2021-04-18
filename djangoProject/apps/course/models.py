@@ -1,9 +1,12 @@
+from functools import reduce
+
 from django.db import models
 
 from djangoProject.utils.generl_model import BaseModel
-
-
 # Create your models here.
+from user.models import UserInfo
+
+
 class CourseCategory(BaseModel):
     """课程分类"""
     name = models.CharField(max_length=64, unique=True, verbose_name="分类名称")
@@ -37,6 +40,7 @@ class Course(BaseModel):
     )
     name = models.CharField(max_length=128, verbose_name="课程名称")
     course_img = models.ImageField(upload_to="course", max_length=255, verbose_name="封面图片", blank=True, null=True)
+    course_video = models.FileField(upload_to="video", null=True, blank=True, verbose_name="封面视频")
     course_type = models.SmallIntegerField(choices=course_type, default=0, verbose_name="付费类型")
     # 使用这个字段的原因
     brief = models.TextField(max_length=2048, verbose_name="详情介绍", null=True, blank=True)
@@ -70,8 +74,45 @@ class Course(BaseModel):
                 'name': lesson.name,
                 'free_trail': lesson.free_trail
             })
-
         return data_list
+
+    @property
+    def lesson_info(self):
+        """
+        返回该课程的前四个课时
+        用于课程列表页面展示课时
+        # 先查当前课程的章节  再通过章节查找课时
+        """
+        # 获取属于当前课程的所有课时
+        lesson_list = CourseLesson.objects.filter(is_show_list=True, is_delete=False, course_id=self.id).all()
+        data_list = []
+        for lesson in lesson_list:
+            data_list.append({
+                'chapter': lesson.chapter.chapter,
+                'chapter_name': lesson.chapter.name,
+            })
+        data_list = reduce(lambda x, y: x if y in x else x + [y], [[], ] + data_list)
+        for i in range(len(data_list)):
+            list1 = []
+            for lesson in lesson_list:
+                if lesson.chapter.chapter == data_list[i]['chapter']:
+                    list1.append({
+                        'lesson_orders': lesson.orders,
+                        'name': lesson.name,
+                        'free_trail': lesson.free_trail,
+                        'duration': lesson.duration,
+                        'Lesson_video': str(lesson.lesson_video),
+                    })
+            data_list[i]['lesson'] = list1
+        return data_list
+
+    @property
+    def type(self):
+        return self.get_course_type_display()
+
+    @property
+    def level_n(self):
+        return self.get_level_display()
 
     class Meta:
         db_table = "course"
@@ -95,6 +136,10 @@ class Teacher(BaseModel):
     signature = models.CharField(max_length=255, verbose_name="导师签名", help_text="导师签名", blank=True, null=True)
     image = models.ImageField(upload_to="teacher", null=True, verbose_name="讲师封面")
     brief = models.TextField(max_length=1024, verbose_name="讲师描述")
+
+    @property
+    def role_name(self):
+        return self.get_role_display()
 
     class Meta:
         db_table = "teacher"
@@ -136,6 +181,7 @@ class CourseLesson(BaseModel):
     section_link = models.CharField(max_length=255, blank=True, null=True, verbose_name="课时链接",
                                     help_text="若是video，填vid,若是文档，填link")
     duration = models.CharField(verbose_name="视频时长", blank=True, null=True, max_length=32)  # 仅在前端展示使用
+    lesson_video = models.FileField(upload_to="video", null=True, blank=True, verbose_name="视频")
     pub_date = models.DateTimeField(verbose_name="发布时间", auto_now_add=True)
     free_trail = models.BooleanField(verbose_name="是否可试看", default=False)
     course = models.ForeignKey("Course", related_name="course_lesson", on_delete=models.CASCADE, verbose_name="课程")
@@ -150,3 +196,23 @@ class CourseLesson(BaseModel):
 
     def __str__(self):
         return "%s-%s" % (self.chapter, self.name)
+
+
+class Comment(models.Model):
+    date = models.DateTimeField(verbose_name="评论时间", auto_now_add=True)
+    user = models.ForeignKey(to=UserInfo, related_name='comment_id', on_delete=models.CASCADE, verbose_name="评论用户")
+    course = models.ForeignKey('Course', related_name='course_comment', on_delete=models.CASCADE, verbose_name="评论课程")
+    text = models.TextField()
+    is_delete = models.BooleanField(default=False, verbose_name='是否删除')
+
+    @property
+    def username(self):
+        return self.user.username
+
+    class Meta:
+        db_table = "comment"
+        verbose_name = "课程评论"
+        verbose_name_plural = "课程评论"
+
+    def __str__(self):
+        return "%s-%s" % (self.user.username, self.course.name)
