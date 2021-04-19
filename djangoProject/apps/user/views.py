@@ -139,7 +139,7 @@ class MessageCheckAPIView(APIView):
 
 class ChangePasswordAPIView(GenericAPIView, UpdateModelMixin):
     """修改视图"""
-    # # 登录用户才可以访问
+    # 登录用户才可以访问
     permission_classes = [IsAuthenticated]
     # 认证用户携带的 jwt token
     authentication_classes = [JSONWebTokenAuthentication]

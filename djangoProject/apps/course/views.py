@@ -3,7 +3,9 @@ from rest_framework import status as http_status
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.generics import ListAPIView, GenericAPIView
 from rest_framework.mixins import CreateModelMixin
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework_jwt.authentication import JSONWebTokenAuthentication
 
 from course.models import CourseCategory, Course, Comment
 from course.serializer import CourseCategoryModelSerializer, CourseModelSerializer, CourseInfoModelSerializer, \
@@ -52,19 +54,25 @@ class CourseInfoAPIView(ListAPIView):
     search_fields = ['id']
 
 
-class CommentAPIView(GenericAPIView,
-                     CreateModelMixin):
-    """课程评论"""
-    # 获取当前视图类要操作的模型
-    queryset = Comment.objects.all()
-    # 指定当前视图要使用的序列化器类
-    serializer_class = CommentModelSerializer
-
+class getCommentAPIView(GenericAPIView):
     def get(self, request, *args, **kwargs):
         comment = Comment.objects.filter(is_delete=False, course=request.GET.get('course')).order_by('-date')
         return Response({
             'results': CommentModelSerializer(comment, many=True).data
         })
+
+
+class CommentAPIView(GenericAPIView,
+                     CreateModelMixin):
+    """课程评论"""
+    # 登录用户才可以访问
+    permission_classes = [IsAuthenticated]
+    # 认证用户携带的 jwt token
+    authentication_classes = [JSONWebTokenAuthentication]
+    # 获取当前视图类要操作的模型
+    queryset = Comment.objects.all()
+    # 指定当前视图要使用的序列化器类
+    serializer_class = CommentModelSerializer
 
     def post(self, request, *args, **kwargs):
         return self.create(request, *args, **kwargs)

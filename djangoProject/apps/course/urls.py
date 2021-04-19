@@ -8,4 +8,5 @@ urlpatterns = [
     path("list/", views.CourseListAPIView.as_view()),
     path("info/", views.CourseInfoAPIView.as_view()),
     path("comment/", views.CommentAPIView.as_view()),
+    path("get_comment/", views.getCommentAPIView.as_view()),
 ]
