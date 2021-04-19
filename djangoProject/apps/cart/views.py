@@ -143,3 +143,23 @@ class CartView(ViewSet):
         # 将以上两个命令发送到redis执行
         pipeline.execute()
         return Response('OK')
+
+    def del_car(self, request):
+        """
+        删除购物车的物品
+        :param request:
+        :return:
+        """
+        user_id = request.user.id
+        course_id = request.data.get("course_id")
+
+        redis_connection = get_redis_connection("cart")
+        # 将购物车数据通过管道保存到redis
+        pipeline = redis_connection.pipeline()
+        # 开启管道
+        pipeline.multi()
+        for id in course_id:
+            redis_connection.hdel("cart_%s" % user_id, id)
+        # 将以上两个命令发送到redis执行
+        pipeline.execute()
+        return Response('OK')
