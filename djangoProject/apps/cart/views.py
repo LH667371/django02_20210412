@@ -85,21 +85,21 @@ class CartView(ViewSet):
                 course = Course.objects.get(is_show=True, is_delete=False, pk=course_id)
             except Course.DoesNotExist:
                 continue
-            if course.course_type == 3:
-                price = 0
-            else:
-                price = course.price
             # 购物车所需的信息
             course_data.append({
                 "course_id": course.id,
                 "name": course.name,
                 # 图片 返回的是图片的显示路径
                 "image": course.course_img.url,
-                "price": price,
+                # 原价参与活动后的价格
+                "price": course.real_price,
+                # 有效期价格参与活动的价格
+                "expire_price": course.expire_price(expire_id),
                 "selected": True if course_id_byte in select_list_byte else False,
-                "expire_id": expire_id
+                "expire_id": expire_id,
+                # 课程的有效期选项
+                "expire_list": course.expire_list,
             })
-
         return Response(course_data)
 
     def car_course_select(self, request):
@@ -110,6 +110,12 @@ class CartView(ViewSet):
         """
         user_id = request.user.id
         course_id = request.data.get("course_id")
+        expire = request.data.get("expire")
+        if expire is not None:
+            redis_connection = get_redis_connection("cart")
+            redis_connection.hset("cart_%s" % user_id, course_id, expire)
+            course = Course.objects.get(is_show=True, is_delete=False, pk=course_id)
+            return Response({"expire_price": course.expire_price(expire)})
         selected = request.data.get("selected")
 
         redis_connection = get_redis_connection("cart")

@@ -27,7 +27,7 @@ class CourseModelSerializer(ModelSerializer):
     class Meta:
         model = Course
         fields = ["id", "name", "course_img", "students", "pub_lessons", "lessons",
-                  "price", 'course_type', 'teacher', 'lesson_list']
+                  "price", 'teacher', 'lesson_list', 'discount_name', 'real_price']
 
 
 class TeacherInfoModelSerializer(ModelSerializer):
@@ -47,7 +47,7 @@ class CourseInfoModelSerializer(ModelSerializer):
         model = Course
         # fields = ["id", "name", "course_img", "students", "pub_lessons", "lessons", "price", 'course_type', 'teacher', 'lesson_list']
         fields = ['id', 'teacher', 'name', 'course_video', 'type', 'brief', 'level_n', 'students', 'lessons',
-                  'pub_lessons', 'price', 'lesson_info']
+                  'pub_lessons', 'price', 'lesson_info', 'discount_name', 'real_price', 'active_time']
 
 
 class CommentModelSerializer(ModelSerializer):

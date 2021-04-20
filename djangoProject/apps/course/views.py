@@ -36,7 +36,7 @@ class CourseListAPIView(ListAPIView):
     filter_fields = ("course_category",)
 
     # 指定排序的条件
-    ordering_fields = ("id", "students", "price")
+    ordering_fields = ("id", "students", "real_price")
 
     # 指定分页器
     pagination_class = CoursePageNumberPagination

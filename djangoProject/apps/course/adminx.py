@@ -1,6 +1,7 @@
 import xadmin
 
-from course.models import CourseCategory, Course, Teacher, CourseChapter, CourseLesson, Comment
+from course.models import CourseCategory, Course, Teacher, CourseChapter, CourseLesson, Comment, CourseDiscountType, \
+    CourseDiscount, CoursePriceDiscount, Activity, CourseExpire
 
 
 class CourseCategoryModelAdmin(object):
@@ -56,3 +57,48 @@ class CommentModelAdmin(object):
 
 
 xadmin.site.register(Comment, CommentModelAdmin)
+
+
+# 以下是优惠活动相关
+class PriceDiscountTypeModelAdmin(object):
+    """价格优惠类型"""
+    list_display = ['id', 'name', 'remark', 'is_delete']
+    ordering = ['id']
+
+
+xadmin.site.register(CourseDiscountType, PriceDiscountTypeModelAdmin)
+
+
+class PriceDiscountModelAdmin(object):
+    """价格优惠公式"""
+    list_display = ['id', 'discount_type', 'condition', 'sale', 'is_delete']
+    ordering = ['id']
+
+
+xadmin.site.register(CourseDiscount, PriceDiscountModelAdmin)
+
+
+class CoursePriceDiscountModelAdmin(object):
+    """商品优惠和活动的关系"""
+    list_display = ['id', 'course', 'active', 'discount', 'is_delete']
+    ordering = ['id']
+
+
+xadmin.site.register(CoursePriceDiscount, CoursePriceDiscountModelAdmin)
+
+
+class ActivityModelAdmin(object):
+    """商品活动模型"""
+    list_display = ['id', 'name', 'start_time', 'end_time', 'remark', 'is_delete']
+    ordering = ['id']
+
+
+xadmin.site.register(Activity, ActivityModelAdmin)
+
+class CourseExpireModelAdmin(object):
+    """商品活动模型"""
+    list_display = ['id', 'course', 'expire_time', 'expire_text', 'price', 'is_delete']
+    ordering = ['id']
+
+
+xadmin.site.register(CourseExpire, CourseExpireModelAdmin)
