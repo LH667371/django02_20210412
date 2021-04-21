@@ -30,5 +30,6 @@ urlpatterns = [
     path('user/', include('djangoProject.apps.user.urls')),
     path('course/', include('djangoProject.apps.course.urls')),
     path('cart/', include('djangoProject.apps.cart.urls')),
+    path('order/', include('djangoProject.apps.order.urls')),
     url(r"media/(?P<path>.*)", serve, {"document_root": settings.MEDIA_ROOT}),
 ]

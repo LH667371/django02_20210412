@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
 from rest_framework_jwt.authentication import JSONWebTokenAuthentication
 
-from course.models import Course
+from course.models import Course, CourseExpire
 
 # Create your views here.
 log = logging.getLogger("django")
@@ -145,7 +145,7 @@ class CartView(ViewSet):
                 pipeline.sadd("select_%s" % user_id, id)
         else:
             for id in course_id:
-                redis_connection.srem("select_%s" % user_id, id)
+                pipeline.srem("select_%s" % user_id, id)
         # 将以上两个命令发送到redis执行
         pipeline.execute()
         return Response('OK')
@@ -165,7 +165,66 @@ class CartView(ViewSet):
         # 开启管道
         pipeline.multi()
         for id in course_id:
-            redis_connection.hdel("cart_%s" % user_id, id)
+            pipeline.hdel("cart_%s" % user_id, id)
         # 将以上两个命令发送到redis执行
         pipeline.execute()
         return Response('OK')
+
+    def get_select_course(self, request):
+        """
+        获取购物车中已勾选的商品在订单结算页展示
+        :param request:
+        :return:
+        """
+        user_id = request.user.id
+        redis_connection = get_redis_connection("cart")
+
+        cart_list_byte = redis_connection.hgetall("cart_%s" % user_id)
+        select_list_byte = redis_connection.smembers("select_%s" % user_id)
+
+        data = []  # 已勾选的课程列表
+        total_price = 0
+
+        for course_id_byte, expire_id_byte in cart_list_byte.items():
+            course_id = int(course_id_byte)
+            expire_id = int(expire_id_byte)
+
+            if course_id_byte in select_list_byte:
+                try:
+                    course = Course.objects.get(is_show=True, is_delete=False, pk=course_id)
+                except Course.DoesNotExist:
+                    continue
+
+                    # 判断课程的有效期  有效期id大于0，则需要重新计算商品的价格  id不大于0代表永久有效，默认雨原价
+                original_price = course.price
+                expire_text = "永久有效"
+
+                try:
+                    if expire_id > 0:
+                        # 获取有效期的价格，再进行活动计算
+                        course_expire = CourseExpire.objects.get(pk=expire_id)
+                        original_price = course_expire.price
+                        expire_text = course_expire.expire_text
+                except CourseExpire.DoesNotExist:
+                    pass
+
+                # 根据已勾选的商品的价格来计算商品最终的价格
+                course_expire_price = course.expire_price(expire_id)
+
+                # 将订单结算页所需的信息返回
+                data.append({
+                    "name": course.name,
+                    # 图片 返回的是图片的显示路径
+                    "image": course.course_img.url,
+                    "price": original_price,
+                    # 有效期价格参与活动的价格
+                    "expire_price": float(course_expire_price),
+                    "expire_text": expire_text,
+                    # 活动名称
+                    "discount_name": course.discount_name,
+                })
+
+                # 所有勾选的课程总价
+                total_price += float(course_expire_price)
+
+        return Response({"course_list": data, "total_price": total_price})

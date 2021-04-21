@@ -268,7 +268,7 @@ class Course(BaseModel):
                             price = get_price - max(price_list)  # 课程原价 - 满足条件的最大优惠
             return "%.2f" % price
         except:
-            return price
+            return "%.2f" % price
 
     class Meta:
         db_table = "course"
