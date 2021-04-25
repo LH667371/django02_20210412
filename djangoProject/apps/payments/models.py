@@ -4,6 +4,7 @@ from course.models import Course
 from djangoProject.utils.generl_model import BaseModel
 from user.models import UserInfo
 
+
 # Create your models here.
 class UserCourse(BaseModel):
     """用户的课程购买记录"""

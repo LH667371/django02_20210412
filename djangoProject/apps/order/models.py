@@ -44,6 +44,7 @@ class Order(BaseModel):
             except:
                 expire = '永久有效'
             orderDetail.append({
+                'id': i.course.id,
                 'name': i.course.name,
                 'course_img': str(i.course.course_img),
                 'price': str(i.price),
@@ -52,6 +53,14 @@ class Order(BaseModel):
                 'expire': expire,
             })
         return orderDetail
+
+    @property
+    def course(self):
+        course = []
+        order = OrderDetail.objects.filter(order=self.id)
+        for i in order:
+            course.append(i.course)
+        return course
 
     class Meta:
         db_table = "order"

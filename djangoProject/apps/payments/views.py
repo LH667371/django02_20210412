@@ -1,4 +1,5 @@
 from datetime import datetime
+from datetime import timedelta
 
 from alipay import AliPay
 from django.conf import settings
@@ -11,11 +12,8 @@ from rest_framework_jwt.authentication import JSONWebTokenAuthentication
 
 from course.models import CourseExpire
 from order.models import Order
-
-
 # Create your views here.
 from payments.models import UserCourse
-from user.models import UserInfo
 
 
 class ALiPayAPIView(APIView):
@@ -29,12 +27,23 @@ class ALiPayAPIView(APIView):
         order_number = request.query_params.get("order_number")
         try:
             order = Order.objects.get(order_number=order_number)
+            if datetime.now() - order.create_time > timedelta(minutes=30) and order.order_status == 0:
+                order.order_status = 3
+                order.save()
             if order.get_order_status_display() == '已取消':
                 return Response({"message": "对不起，您支付的订单已取消！"}, status=status.HTTP_402_PAYMENT_REQUIRED)
             if order.get_order_status_display() == '超时取消':
                 return Response({"message": "对不起，您支付的订单已经超时！"}, status=status.HTTP_402_PAYMENT_REQUIRED)
             if order.get_order_status_display() == '已支付':
                 return Response({"message": "对不起，您支付的订单已支付！"}, status=status.HTTP_402_PAYMENT_REQUIRED)
+            try:
+                user_course = UserCourse.objects.values('course').filter(user=order.user.id)
+                for user in user_course:
+                    for course in order.course:
+                        if user['course'] == course.id:
+                            return Response({"message": "对不起，您支付的订单包含已购买的课程！"}, status=status.HTTP_402_PAYMENT_REQUIRED)
+            except Exception as e:
+                print(e)
         except Order.DoesNotExist:
             return Response({"message": "对不起，您支付的订单不存在！"}, status=status.HTTP_402_PAYMENT_REQUIRED)
 
@@ -70,6 +79,7 @@ class PayResultAPIView(APIView):
     permission_classes = [IsAuthenticated]
     # 认证用户携带的 jwt token
     authentication_classes = [JSONWebTokenAuthentication]
+
     def get(self, request):
         alipay = AliPay(
             appid=settings.ALIAPY_CONFIG['appid'],
@@ -144,11 +154,12 @@ class PayResultAPIView(APIView):
                     course_list.append({
                         'course_name': course.name,
                         'start_time': order.pay_time,
-                        'end_time':  end_time,
+                        'end_time': end_time,
                     })
                     # 为用户生成购买记录
                     # print(user, course, order.pay_time, end_time, trade_no)
-                    UserCourse.objects.create(user=user, course=course, pay_time=order.pay_time, out_time=end_time, trade_no=trade_no)
+                    UserCourse.objects.create(user=user, course=course, pay_time=order.pay_time, out_time=end_time,
+                                              trade_no=trade_no)
                     # 将页面所需的课程信息存放到course_list
 
             except:
