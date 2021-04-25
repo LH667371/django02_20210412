@@ -1,6 +1,6 @@
 from django.db import models
 
-from course.models import Course
+from course.models import Course, CourseExpire
 from djangoProject.utils.generl_model import BaseModel
 from user.models import UserInfo
 
@@ -29,6 +29,29 @@ class Order(BaseModel):
     order_desc = models.TextField(max_length=500, verbose_name="订单描述")
     pay_time = models.DateTimeField(null=True, verbose_name="支付时间")
     user = models.ForeignKey(UserInfo, related_name='user_orders', on_delete=models.DO_NOTHING, verbose_name="下单用户")
+
+    @property
+    def status(self):
+        return self.get_order_status_display()
+
+    @property
+    def order_detail(self):
+        orderDetail = []
+        order = OrderDetail.objects.filter(order=self.id)
+        for i in order:
+            try:
+                expire = CourseExpire.objects.get(pk=i.expire).expire_text
+            except:
+                expire = '永久有效'
+            orderDetail.append({
+                'name': i.course.name,
+                'course_img': str(i.course.course_img),
+                'price': str(i.price),
+                'real_price': str(i.real_price),
+                'discount_name': str(i.discount_name),
+                'expire': expire,
+            })
+        return orderDetail
 
     class Meta:
         db_table = "order"

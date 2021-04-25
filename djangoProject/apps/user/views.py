@@ -11,6 +11,7 @@ from rest_framework_jwt.authentication import JSONWebTokenAuthentication
 
 from djangoProject.libs.geetest import GeetestLib
 from djangoProject.utils.generate_code import generate_code
+from djangoProject.utils.message import Message
 from user.models import UserInfo
 from user.serializer import RegisterSerializers, ChangePasswordSerializers
 from user.utils import get_user_by_account

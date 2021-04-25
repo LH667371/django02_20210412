@@ -1,10 +1,9 @@
 from datetime import datetime
 
+from django.db import transaction
 from django_redis import get_redis_connection
 from rest_framework import serializers
 from rest_framework.serializers import ModelSerializer
-from django.db import transaction
-
 
 from course.models import Course, CourseExpire
 from order.models import Order, OrderDetail
@@ -13,13 +12,13 @@ from order.models import Order, OrderDetail
 class OrderModelSerializer(ModelSerializer):
     class Meta:
         model = Order
-        fields = ("id", "order_number", "pay_type")
+        fields = ("id", "order_number", "pay_type", 'order_status')
 
         extra_kwargs = {
             "id": {"read_only": True},
             "order_number": {"read_only": True},
             "pay_type": {"write_only": True},
-
+            "order_status": {"write_only": True},
         }
 
     def validate(self, attrs):
@@ -48,9 +47,13 @@ class OrderModelSerializer(ModelSerializer):
         with transaction.atomic():
             # 记录事务的回滚点
             savepoint = transaction.savepoint()
-
+            try:
+                id = Order.objects.values('id').last()['id'] + 1
+            except:
+                id = 1
             # 生成订单
             order = Order.objects.create(
+                id=id,
                 order_title="百知教育在线课程订单",
                 total_price=0,
                 real_price=0,
@@ -95,10 +98,14 @@ class OrderModelSerializer(ModelSerializer):
 
                     # 根据已勾选的商品的价格来计算商品最终的价格
                     course_expire_price = course.expire_price(expire_id)
-
+                    try:
+                        id = OrderDetail.objects.values('id').last()['id'] + 1
+                    except:
+                        id = 1
                     # 生成订单详情
                     try:
                         OrderDetail.objects.create(
+                            id=id,
                             order=order,
                             course=course,
                             expire=expire_id,
@@ -116,3 +123,20 @@ class OrderModelSerializer(ModelSerializer):
                     order.real_price += float(course_expire_price)
                 order.save()
             return order
+
+
+class GetOrderModelSerializer(ModelSerializer):
+    class Meta:
+        model = Order
+        fields = ['id', 'total_price', 'real_price', 'order_number', 'status', 'create_time', 'pay_time',
+                  'order_detail']
+        # depth = 1
+
+class CancelOrderModelSerializer(ModelSerializer):
+    class Meta:
+        model = Order
+        fields = ("id", 'order_status')
+
+        # extra_kwargs = {
+        #     "order_status": {"write_only": True},
+        # }

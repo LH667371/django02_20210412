@@ -96,7 +96,8 @@ class RegisterSerializers(ModelSerializer):
             id = 1
         # 保存对象
         user = UserInfo.objects.create(id=id, phone=phone, username=username, password=hash_pwd)
-
+        from my_task.sms.tasks import send_msg
+        send_msg(phone, '恭喜你注册成功啦！')
         # 用户创建后为该用户生成token
         if user:
             from rest_framework_jwt.settings import api_settings
