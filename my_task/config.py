@@ -13,8 +13,7 @@ app.conf.beat_schedule = {
         'task': 'check_order',
         # 定时任务执行的周期
         # 'schedule': 60.0,
-        # 'schedule': crontab(),
-        'schedule': 10.0,
+        'schedule': crontab(),
         # 定时任务所需参数 有参数就传递
         # 'args': (16, 16)
     },
